@@ -26,3 +26,13 @@ mais recentes no momento do setup.
 **Por quê:** o `typescript-eslint` declara suporte a TypeScript `>=4.8.4 <6.1.0`, e
 NestJS/Next/ts-jest ainda miram TS 5.x — TS 7 ficaria fora da faixa suportada e brigaria com a
 toolchain. Priorizei estabilidade e CI verde sobre estar na ponta.
+
+## Formato dos eventos
+
+**Decisão:** Envelope `{ eventId, occurredAt, data }` para os dois eventos, com os tipos em
+`packages/contracts` importados por quem publica e por quem consome.
+
+**Alternativas consideradas:** payload "cru" (apenas os campos de domínio), sem envelope.
+
+**Por quê:** `eventId` habilita idempotência no consumo e `occurredAt` dá rastreio/debug, a
+custo baixo. Tipos compartilhados no contracts impedem que produtor e consumidor divirjam.
