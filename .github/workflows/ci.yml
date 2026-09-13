@@ -8,6 +8,10 @@ jobs:
   quality:
     name: Quality gate
     runs-on: ubuntu-latest
+    env:
+      # `prisma generate` (no build/typecheck) valida que a URL existe — não conecta ao banco.
+      # Um valor dummy basta enquanto não há testes de banco (Postgres real entra na Fase 3).
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/challenge?schema=public
     steps:
       - name: Checkout
         uses: actions/checkout@v5

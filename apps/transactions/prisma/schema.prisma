@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Tipos de transferência (tabela de referência, semeada por migration).
+model TransactionType {
+  id           Int           @id
+  name         String        @unique
+  transactions Transaction[]
+}
+
+/// Status possíveis de uma transação (domínio fechado).
+enum TransactionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Transaction {
+  /// Identificador público e único da transação (também é a PK).
+  transactionExternalId   String            @id @default(uuid())
+  accountExternalIdDebit  String
+  accountExternalIdCredit String
+  transferTypeId          Int
+  transferType            TransactionType   @relation(fields: [transferTypeId], references: [id])
+  value                   Decimal           @db.Decimal(18, 2)
+  status                  TransactionStatus @default(PENDING)
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  @@index([status])
+  @@index([transferTypeId])
+  @@index([createdAt])
+}
