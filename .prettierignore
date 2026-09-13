@@ -1,0 +1,12 @@
+**/dist/**
+**/.next/**
+**/coverage/**
+**/node_modules/**
+**/.turbo/**
+pnpm-lock.yaml
+
+# Arquivos entregues com o desafio — mantidos como recebidos
+README.md
+PRACTICES.md
+docker-compose.yml
+.github/pull_request_template.md
