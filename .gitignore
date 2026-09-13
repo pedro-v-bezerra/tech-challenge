@@ -8,6 +8,9 @@ build/
 .next/
 out/
 next-env.d.ts
+
+# turborepo
+.turbo/
 *.tsbuildinfo
 
 # tests
