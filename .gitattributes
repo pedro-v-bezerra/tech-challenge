@@ -1,0 +1,12 @@
+# Normaliza quebras de linha para LF em todo o repositório, independentemente do SO.
+# Sobrepõe o core.autocrlf local (Windows) e mantém consistência com o CI (Linux) e o Prettier.
+* text=auto eol=lf
+
+# Arquivos binários não devem ser normalizados.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
