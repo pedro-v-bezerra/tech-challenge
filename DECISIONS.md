@@ -139,3 +139,14 @@ vez de depender do auto-create do broker.
 **Por quê:** o consumidor sobe antes da primeira publicação, e assinar um tópico inexistente
 falha (`UNKNOWN_TOPIC_OR_PARTITION`). Garantir no startup torna a subida determinística ("sobe
 sem perguntar nada"), sem depender de configuração específica do broker.
+
+## Atualização de status no serviço de transações
+
+**Decisão:** O `transactions` é um app híbrido (HTTP + consumidor Kafka): consome
+`transaction.status.updated` e aplica a transição no banco.
+
+**Alternativas consideradas:** um serviço consumidor separado só para atualizar o status.
+
+**Por quê:** os dados e o modelo Prisma já vivem no `transactions`; consumir ali mantém a escrita
+do status num único dono, sem duplicar acesso ao banco. A transição é idempotente (só muda quando
+ainda está `PENDING`), cobrindo o reprocessamento da entrega at-least-once.

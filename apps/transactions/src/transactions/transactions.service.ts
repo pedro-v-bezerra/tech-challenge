@@ -2,7 +2,12 @@ import { randomUUID } from 'node:crypto';
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { type EventEnvelope, Topics, type TransactionCreatedData } from '@biud/contracts';
+import {
+  type EventEnvelope,
+  Topics,
+  type TransactionCreatedData,
+  type TransactionStatus,
+} from '@biud/contracts';
 
 import { EventPublisher } from '../events/event-publisher';
 import { PrismaService } from '../prisma/prisma.service';
@@ -105,6 +110,17 @@ export class TransactionsService {
       items: items.map((transaction) => this.toResponse(transaction)),
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
+  }
+
+  /**
+   * Aplica o resultado do antifraude. Idempotente: só transiciona quando o status ainda é
+   * PENDING, então reprocessar o mesmo evento (entrega at-least-once) é inócuo.
+   */
+  async applyStatusUpdate(transactionExternalId: string, status: TransactionStatus): Promise<void> {
+    await this.prisma.transaction.updateMany({
+      where: { transactionExternalId, status: 'PENDING' },
+      data: { status },
+    });
   }
 
   private toResponse(transaction: TransactionWithType): TransactionResponse {

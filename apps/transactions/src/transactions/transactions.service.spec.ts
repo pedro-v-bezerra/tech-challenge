@@ -15,6 +15,7 @@ describe('TransactionsService', () => {
       findUnique: jest.Mock;
       findMany: jest.Mock;
       count: jest.Mock;
+      updateMany: jest.Mock;
     };
     $transaction: jest.Mock;
   };
@@ -48,6 +49,7 @@ describe('TransactionsService', () => {
         findUnique: jest.fn(),
         findMany: jest.fn(),
         count: jest.fn(),
+        updateMany: jest.fn(),
       },
       $transaction: jest.fn(),
     };
@@ -122,6 +124,27 @@ describe('TransactionsService', () => {
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
       expect(result.items).toHaveLength(1);
       expect(result.meta).toEqual({ page: 2, limit: 10, total: 1, totalPages: 1 });
+    });
+  });
+
+  describe('applyStatusUpdate', () => {
+    it('transiciona apenas transações ainda PENDING (idempotente)', async () => {
+      prisma.transaction.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.applyStatusUpdate('ext-1', TransactionStatus.Approved);
+
+      expect(prisma.transaction.updateMany).toHaveBeenCalledWith({
+        where: { transactionExternalId: 'ext-1', status: 'PENDING' },
+        data: { status: TransactionStatus.Approved },
+      });
+    });
+
+    it('é inócuo quando o evento é reprocessado (nenhuma linha afetada)', async () => {
+      prisma.transaction.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(
+        service.applyStatusUpdate('ext-1', TransactionStatus.Rejected),
+      ).resolves.toBeUndefined();
     });
   });
 });
