@@ -3,6 +3,9 @@
 **/coverage/**
 **/node_modules/**
 **/.turbo/**
+**/next-env.d.ts
+# O next build reescreve/gerencia este tsconfig automaticamente.
+apps/web/tsconfig.json
 pnpm-lock.yaml
 
 # Arquivos entregues com o desafio — mantidos como recebidos

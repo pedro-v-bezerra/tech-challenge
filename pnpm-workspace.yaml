@@ -7,6 +7,7 @@ packages:
 # @parcel/watcher e unrs-resolver são acelerações nativas opcionais (watch/resolver) — não
 # precisamos delas no quality gate, então ficam desabilitadas (fallback em JS).
 # @scarf/scarf é telemetria (beacon no postinstall) — desabilitado por privacidade.
+# sharp é otimização de imagem opcional do Next — não precisamos do binário nativo.
 allowBuilds:
   '@parcel/watcher': false
   '@prisma/client': true
@@ -14,4 +15,5 @@ allowBuilds:
   '@scarf/scarf': false
   esbuild: true
   prisma: true
+  sharp: false
   unrs-resolver: false
