@@ -33,6 +33,9 @@ async function bootstrap(): Promise<void> {
 
   const app = await NestFactory.create(AppModule);
 
+  // Libera o dashboard (outra origem) a chamar a API e a consumir o SSE.
+  app.enableCors({ origin: process.env.WEB_ORIGIN ?? true });
+
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
   );
