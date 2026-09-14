@@ -102,3 +102,40 @@ certo" com um mock, sem broker, e permite evoluir a publicação (retry, batchin
 **Por quê:** o consumidor é o dashboard, que precisa de contagem total e navegação por número
 de página — offset entrega isso de forma simples. Cursor é mais eficiente em páginas profundas
 e fica registrado como o caminho de escala (ver resposta de escala), quando o volume justificar.
+
+## Transporte de eventos (Kafka)
+
+**Decisão:** `@nestjs/microservices` com transporte Kafka (kafkajs). Eventos são fire-and-forget:
+o produtor usa `ClientKafka.emit`; o consumidor usa `@EventPattern`. O `anti-fraud` é um
+microservice puro (sem HTTP).
+
+**Alternativas consideradas:** usar kafkajs "cru" sem a camada do Nest; usar request-reply
+(`@MessagePattern`) em vez de eventos.
+
+**Por quê:** o fluxo é assíncrono e unidirecional — não há resposta a aguardar, então
+`emit`/`@EventPattern` modela melhor que request-reply. A camada do Nest integra DI e ciclo de
+vida e reduz boilerplate.
+
+## Tratamento de falha na mensageria
+
+**Decisão:** Entrega **at-least-once** — o consumidor só confirma o offset após processar; em
+caso de erro, a mensagem é reprocessada. A atualização de status é **idempotente** (transição
+apenas de `PENDING` para um estado final), então reprocessar é inócuo. **DLQ** para mensagens
+"venenosas" fica documentada como evolução.
+
+**Alternativas consideradas:** at-most-once (confirmar antes de processar); implementar DLQ agora.
+
+**Por quê:** perder um evento de status é pior que reprocessá-lo; at-least-once + idempotência
+dá o equilíbrio certo. DLQ tem custo de implementação alto para o prazo e só agrega quando há
+mensagens que falham de forma determinística — documentada para esse cenário.
+
+## Criação de tópicos
+
+**Decisão:** Os tópicos são garantidos no startup do serviço (kafkajs Admin, idempotente), em
+vez de depender do auto-create do broker.
+
+**Alternativas consideradas:** auto-create do broker; criação manual por infraestrutura.
+
+**Por quê:** o consumidor sobe antes da primeira publicação, e assinar um tópico inexistente
+falha (`UNKNOWN_TOPIC_OR_PARTITION`). Garantir no startup torna a subida determinística ("sobe
+sem perguntar nada"), sem depender de configuração específica do broker.
