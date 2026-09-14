@@ -13,6 +13,7 @@ import { EventPublisher } from '../events/event-publisher';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { QueryTransactionsDto } from './dto/query-transactions.dto';
+import { TransactionStreamService } from './transaction-stream.service';
 
 type TransactionWithType = Prisma.TransactionGetPayload<{ include: { transferType: true } }>;
 
@@ -35,6 +36,7 @@ export class TransactionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventPublisher: EventPublisher,
+    private readonly stream: TransactionStreamService,
   ) {}
 
   async create(dto: CreateTransactionDto): Promise<TransactionResponse> {
@@ -117,10 +119,15 @@ export class TransactionsService {
    * PENDING, então reprocessar o mesmo evento (entrega at-least-once) é inócuo.
    */
   async applyStatusUpdate(transactionExternalId: string, status: TransactionStatus): Promise<void> {
-    await this.prisma.transaction.updateMany({
+    const result = await this.prisma.transaction.updateMany({
       where: { transactionExternalId, status: 'PENDING' },
       data: { status },
     });
+
+    // Só notifica o SSE quando houve transição real (evita ruído no reprocessamento).
+    if (result.count > 0) {
+      this.stream.publish({ transactionExternalId, status });
+    }
   }
 
   private toResponse(transaction: TransactionWithType): TransactionResponse {
