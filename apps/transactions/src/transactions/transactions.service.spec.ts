@@ -4,6 +4,7 @@ import { Topics, TransactionStatus } from '@biud/contracts';
 
 import { EventPublisher } from '../events/event-publisher';
 import { PrismaService } from '../prisma/prisma.service';
+import { TransactionStreamService } from './transaction-stream.service';
 import { TransactionsService } from './transactions.service';
 
 describe('TransactionsService', () => {
@@ -20,6 +21,7 @@ describe('TransactionsService', () => {
     $transaction: jest.Mock;
   };
   let publisher: { publish: jest.Mock };
+  let stream: { publish: jest.Mock };
 
   const buildRow = (overrides: Record<string, unknown> = {}) => ({
     transactionExternalId: 'ext-1',
@@ -54,9 +56,11 @@ describe('TransactionsService', () => {
       $transaction: jest.fn(),
     };
     publisher = { publish: jest.fn().mockResolvedValue(undefined) };
+    stream = { publish: jest.fn() };
     service = new TransactionsService(
       prisma as unknown as PrismaService,
       publisher as unknown as EventPublisher,
+      stream as unknown as TransactionStreamService,
     );
   });
 
@@ -137,14 +141,19 @@ describe('TransactionsService', () => {
         where: { transactionExternalId: 'ext-1', status: 'PENDING' },
         data: { status: TransactionStatus.Approved },
       });
+      expect(stream.publish).toHaveBeenCalledWith({
+        transactionExternalId: 'ext-1',
+        status: TransactionStatus.Approved,
+      });
     });
 
-    it('é inócuo quando o evento é reprocessado (nenhuma linha afetada)', async () => {
+    it('é inócuo e não notifica quando o evento é reprocessado (nenhuma linha afetada)', async () => {
       prisma.transaction.updateMany.mockResolvedValue({ count: 0 });
 
       await expect(
         service.applyStatusUpdate('ext-1', TransactionStatus.Rejected),
       ).resolves.toBeUndefined();
+      expect(stream.publish).not.toHaveBeenCalled();
     });
   });
 });

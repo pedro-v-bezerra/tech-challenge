@@ -150,3 +150,18 @@ sem perguntar nada"), sem depender de configuração específica do broker.
 **Por quê:** os dados e o modelo Prisma já vivem no `transactions`; consumir ali mantém a escrita
 do status num único dono, sem duplicar acesso ao banco. A transição é idempotente (só muda quando
 ainda está `PENDING`), cobrindo o reprocessamento da entrega at-least-once.
+
+## Atualização de status na interface (SSE)
+
+**Decisão:** O `transactions` expõe `GET /transactions/stream` (SSE) que empurra cada mudança de
+status (`{ transactionExternalId, status }`). O dashboard abre um `EventSource` e atualiza a linha
+correspondente, sem recarregar.
+
+**Alternativas consideradas:** polling periódico enquanto houver transação pendente na tela;
+WebSocket.
+
+**Por quê:** o fluxo é unidirecional (servidor → cliente); o SSE cobre isso com uma conexão HTTP
+simples e reconexão automática no browser, sem o canal bidirecional (e o estado) que o WebSocket
+exigiria, e sem o desperdício de requisições e a latência do polling. Empurrar o próprio payload
+do update deixa o front atualizar a linha na hora. Limitação: o fan-out é em memória (instância
+única) — multi-instância pediria Redis pub/sub (ver resposta de escala).
