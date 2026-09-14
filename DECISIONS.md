@@ -178,3 +178,16 @@ formulário; Jest no lugar do Vitest.
 **Por quê:** TanStack Query entrega cache, revalidação e os estados de UI prontos — e casa com o
 SSE, que atualiza o cache. RHF + zod dão validação declarativa com um schema que também tipa o
 formulário. Vitest é rápido e alinhado ao ecossistema Vite para testes de componente.
+
+## Reconciliação do cache no realtime
+
+**Decisão:** Ao receber `status.updated` pelo SSE, o dashboard faz patch direto no cache do
+TanStack Query (linha da listagem e detalhe), em vez de invalidar a query e refazer o fetch.
+
+**Alternativas consideradas:** `invalidateQueries` (refetch a cada evento).
+
+**Por quê:** o evento já carrega o estado final (`transactionExternalId` + `status`), então não há
+informação a buscar no servidor; o patch reflete a mudança na hora e evita uma ida de rede por
+evento (relevante sob volume). Invalidar seria mais simples e sempre consistente com o backend,
+mas gera refetch e um piscar de loading — fica como saída caso o payload do evento cresça ou passe
+a divergir do modelo de leitura.
