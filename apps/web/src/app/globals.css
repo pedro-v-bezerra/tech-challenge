@@ -8,3 +8,24 @@
 body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+/* Realce breve na linha quando o status muda em tempo real (SSE). */
+@keyframes row-flash {
+  from {
+    background-color: rgba(129, 140, 248, 0.28);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+.animate-row-flash {
+  animation: row-flash 1.2s ease-out;
+}
+
+/* Respeita quem prefere menos movimento. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-row-flash {
+    animation: none;
+  }
+}
