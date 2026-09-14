@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 
-import { EventPublisher } from './event-publisher';
+import { AntiFraudController } from './anti-fraud.controller';
+import { AntiFraudService } from './anti-fraud.service';
 import { KAFKA_PRODUCER } from './kafka.constants';
-import { KafkaEventPublisher } from './kafka-event-publisher';
 
 @Module({
   imports: [
@@ -17,7 +17,7 @@ import { KafkaEventPublisher } from './kafka-event-publisher';
           transport: Transport.KAFKA,
           options: {
             client: {
-              clientId: config.get<string>('KAFKA_CLIENT_ID', 'transactions'),
+              clientId: config.get<string>('KAFKA_CLIENT_ID', 'anti-fraud'),
               brokers: (config.get<string>('KAFKA_BROKERS') ?? 'localhost:9092').split(','),
             },
           },
@@ -25,7 +25,7 @@ import { KafkaEventPublisher } from './kafka-event-publisher';
       },
     ]),
   ],
-  providers: [{ provide: EventPublisher, useClass: KafkaEventPublisher }],
-  exports: [EventPublisher],
+  controllers: [AntiFraudController],
+  providers: [AntiFraudService],
 })
-export class EventsModule {}
+export class AntiFraudModule {}
