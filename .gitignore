@@ -13,6 +13,10 @@ next-env.d.ts
 .turbo/
 *.tsbuildinfo
 
+# arquivos de agente regenerados pelo `next dev`
+apps/web/AGENTS.md
+apps/web/CLAUDE.md
+
 # tests
 coverage/
 
