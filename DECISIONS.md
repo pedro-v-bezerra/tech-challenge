@@ -165,3 +165,16 @@ simples e reconexão automática no browser, sem o canal bidirecional (e o estad
 exigiria, e sem o desperdício de requisições e a latência do polling. Empurrar o próprio payload
 do update deixa o front atualizar a linha na hora. Limitação: o fan-out é em memória (instância
 única) — multi-instância pediria Redis pub/sub (ver resposta de escala).
+
+## Dashboard (frontend)
+
+**Decisão:** Next.js (App Router) + Tailwind; TanStack Query para data-fetching (cache e estados
+de carregando/erro/vazio); react-hook-form + zod no formulário de criação; testes de tela com
+Vitest + Testing Library (consulta por papel acessível).
+
+**Alternativas consideradas:** fetch/SWR no lugar do TanStack Query; validação manual no
+formulário; Jest no lugar do Vitest.
+
+**Por quê:** TanStack Query entrega cache, revalidação e os estados de UI prontos — e casa com o
+SSE, que atualiza o cache. RHF + zod dão validação declarativa com um schema que também tipa o
+formulário. Vitest é rápido e alinhado ao ecossistema Vite para testes de componente.
