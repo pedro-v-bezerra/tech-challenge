@@ -6,6 +6,9 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap(): Promise<void> {
+  // Silencia o aviso informativo do kafkajs sobre a troca do partitioner padrão (v2).
+  process.env.KAFKAJS_NO_PARTITIONER_WARNING = '1';
+
   const app = await NestFactory.create(AppModule);
 
   app.useGlobalPipes(

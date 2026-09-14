@@ -20,6 +20,9 @@ async function ensureTopics(clientId: string, brokers: string[]): Promise<void> 
 }
 
 async function bootstrap(): Promise<void> {
+  // Silencia o aviso informativo do kafkajs sobre a troca do partitioner padrão (v2).
+  process.env.KAFKAJS_NO_PARTITIONER_WARNING = '1';
+
   const clientId = process.env.KAFKA_CLIENT_ID ?? 'anti-fraud';
   const brokers = (process.env.KAFKA_BROKERS ?? 'localhost:9092').split(',');
 
