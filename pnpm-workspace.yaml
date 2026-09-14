@@ -4,8 +4,12 @@ packages:
 
 # Dependências autorizadas a rodar build scripts (pnpm bloqueia por padrão, por segurança).
 # Prisma precisa posicionar o query engine; esbuild é usado pelo tsx (seed).
+# @parcel/watcher e unrs-resolver são acelerações nativas opcionais (watch/resolver) — não
+# precisamos delas no quality gate, então ficam desabilitadas (fallback em JS).
 allowBuilds:
+  '@parcel/watcher': false
   '@prisma/client': true
   '@prisma/engines': true
   esbuild: true
   prisma: true
+  unrs-resolver: false

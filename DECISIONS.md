@@ -70,3 +70,35 @@ stateless.
 
 **Por quê:** o antifraude só aplica uma regra sobre o payload do evento e responde por outro
 evento — não precisa de estado. Menos acoplamento, e ele escala sem tocar no banco.
+
+## Versão do NestJS
+
+**Decisão:** Fixar NestJS 11.x.
+
+**Alternativas consideradas:** NestJS 12 (major mais novo).
+
+**Por quê:** o NestJS 12 passou a ser distribuído como ESM, o que quebra o setup CommonJS
+(Jest/ts-jest via `require`, e o próprio `node dist/main.js`). O Nest 11 é CommonJS, maduro e
+alinhado com todo o ferramental. Mesma priorização de estabilidade adotada para as outras deps.
+
+## Publicação de eventos atrás de uma abstração
+
+**Decisão:** O serviço publica eventos por uma abstração `EventPublisher` (classe abstrata +
+token de injeção), não pelo Kafka diretamente. A implementação atual é um stub que loga; a de
+Kafka a substitui depois, sem tocar no serviço.
+
+**Alternativas consideradas:** o serviço falar com o cliente Kafka diretamente.
+
+**Por quê:** desacopla a regra de negócio do transporte — dá para testar "publicou o evento
+certo" com um mock, sem broker, e permite evoluir a publicação (retry, batching) num só lugar.
+
+## Paginação da listagem
+
+**Decisão:** Paginação por offset (`page` + `limit`), retornando `items` + `meta` com `page`,
+`limit`, `total` e `totalPages`.
+
+**Alternativas consideradas:** paginação por cursor (keyset).
+
+**Por quê:** o consumidor é o dashboard, que precisa de contagem total e navegação por número
+de página — offset entrega isso de forma simples. Cursor é mais eficiente em páginas profundas
+e fica registrado como o caminho de escala (ver resposta de escala), quando o volume justificar.
