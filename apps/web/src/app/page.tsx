@@ -280,7 +280,7 @@ export default function HomePage() {
                             onClick={() => setDetailId(id)}
                             aria-label="Visualizar transação"
                             title="Visualizar"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-indigo-700"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-brand-700"
                           >
                             <EyeIcon className="h-4 w-4" />
                           </button>

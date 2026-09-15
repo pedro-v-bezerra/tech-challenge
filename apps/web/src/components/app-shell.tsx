@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
+import { BiudLogo } from './biud-logo';
 import { LiveIndicator } from './live-indicator';
 
 /** Moldura da aplicação: barra superior com marca + indicador ao vivo, conteúdo e rodapé. */
@@ -11,14 +12,10 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-full flex-col">
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-3">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white">
-              B
-            </span>
-            <span className="flex flex-col leading-tight">
-              <span className="text-sm font-semibold text-slate-900">BIUD</span>
-              <span className="text-xs text-slate-500">Transações</span>
-            </span>
+          <Link href="/" className="flex items-center gap-3">
+            <BiudLogo className="h-6 w-auto text-brand-600" />
+            <span className="hidden h-5 w-px bg-slate-200 sm:block" aria-hidden="true" />
+            <span className="hidden text-sm font-medium text-slate-500 sm:block">Transações</span>
           </Link>
           <LiveIndicator />
         </div>

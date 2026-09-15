@@ -5,7 +5,7 @@ import { Skeleton } from './skeleton';
 type Tone = 'neutral' | 'approved' | 'rejected' | 'pending';
 
 const DOT: Record<Tone, string> = {
-  neutral: 'bg-indigo-500',
+  neutral: 'bg-brand-500',
   approved: 'bg-emerald-500',
   rejected: 'bg-red-500',
   pending: 'bg-amber-500',

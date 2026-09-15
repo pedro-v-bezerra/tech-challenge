@@ -7,9 +7,9 @@ const pagerButton =
 const pageButton =
   'inline-flex h-9 min-w-9 items-center justify-center rounded-md border border-slate-300 bg-white px-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50';
 const activePageButton =
-  'inline-flex h-9 min-w-9 items-center justify-center rounded-md border border-indigo-600 bg-indigo-600 px-2 text-sm font-medium text-white';
+  'inline-flex h-9 min-w-9 items-center justify-center rounded-md border border-brand-600 bg-brand-600 px-2 text-sm font-medium text-white';
 const perPageSelect =
-  'h-9 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20';
+  'h-9 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20';
 
 /** Páginas visíveis com reticências: 1 … (atual-1, atual, atual+1) … total. */
 function pageItems(current: number, total: number): (number | 'gap')[] {
