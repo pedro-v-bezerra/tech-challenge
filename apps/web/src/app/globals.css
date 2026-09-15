@@ -5,6 +5,36 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Cor de destaque da marca BIUD (#D81656) como escala utilitária (bg-brand-600, text-brand-700…). */
+@theme {
+  --color-brand-50: #fce7ef;
+  --color-brand-100: #fad1e0;
+  --color-brand-500: #e62d6b;
+  --color-brand-600: #d81656;
+  --color-brand-700: #b71049;
+}
+
 body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Realce breve na linha quando o status muda em tempo real (SSE). */
+@keyframes row-flash {
+  from {
+    background-color: rgba(216, 22, 86, 0.16);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+.animate-row-flash {
+  animation: row-flash 1.2s ease-out;
+}
+
+/* Respeita quem prefere menos movimento. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-row-flash {
+    animation: none;
+  }
 }

@@ -191,3 +191,17 @@ informação a buscar no servidor; o patch reflete a mudança na hora e evita um
 evento (relevante sob volume). Invalidar seria mais simples e sempre consistente com o backend,
 mas gera refetch e um piscar de loading — fica como saída caso o payload do evento cresça ou passe
 a divergir do modelo de leitura.
+
+## Criação e detalhe em modal (com rota preservada)
+
+**Decisão:** Criação e detalhe abrem em modal a partir da listagem (estado no cliente). O form e o
+detalhe ficam em componentes reutilizáveis, montados tanto no modal quanto nas rotas
+`/transactions/new` e `/transactions/[id]`, que seguem existindo.
+
+**Alternativas consideradas:** telas de página cheia (sem modal); modal via intercepting/parallel
+routes do Next; modal puro sem rota.
+
+**Por quê:** o modal mantém o usuário no contexto da listagem (mais fluido para criar e conferir),
+enquanto manter as rotas preserva link direto e refresh — sem duplicar UI, já que ambos consomem
+os mesmos componentes. Intercepting routes dariam URL sincronizada com o modal, mas com bem mais
+complexidade do que o ganho justifica aqui.
