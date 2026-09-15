@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { useCallback, useState, type MouseEvent } from 'react';
 import type { TransactionStatus } from '@biud/contracts';
 
+import { EyeIcon, FilterIcon, XIcon } from '@/components/icons';
 import { Modal } from '@/components/modal';
+import { Pagination } from '@/components/pagination';
 import { Skeleton } from '@/components/skeleton';
 import { StatCard } from '@/components/stat-card';
 import { StatusBadge } from '@/components/status-badge';
@@ -19,9 +21,9 @@ import {
   STATUS_OPTIONS,
   TRANSFER_TYPES,
 } from '@/lib/transaction-types';
-import { cardClass, controlClass, primaryButtonClass, secondaryButtonClass } from '@/lib/ui';
+import { cardClass, controlClass, primaryButtonClass } from '@/lib/ui';
 
-const COLUMNS = 5;
+const COLUMNS = 6;
 
 // Deixa o clique com modificador (nova aba/janela) seguir o link em vez de abrir o modal.
 function isModifiedClick(event: MouseEvent): boolean {
@@ -128,76 +130,91 @@ export default function HomePage() {
         />
       </section>
 
-      <section
-        aria-label="Filtros"
-        className={`${cardClass} flex flex-wrap items-center gap-3 p-4`}
-      >
-        <select
-          aria-label="Status"
-          className={controlClass}
-          value={filters.status ?? ''}
-          onChange={(event) =>
-            updateFilter({ status: (event.target.value || undefined) as TransactionStatus })
-          }
-        >
-          <option value="">Todos os status</option>
-          {STATUS_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+      <section aria-label="Filtros" className={`${cardClass} space-y-4 p-4`}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-slate-600">
+            <FilterIcon className="h-4 w-4 text-slate-400" />
+            <span className="text-sm font-medium">Filtros</span>
+          </div>
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={() => setFilters({ page: 1, limit: filters.limit })}
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            >
+              <XIcon className="h-3.5 w-3.5" />
+              Limpar filtros
+            </button>
+          )}
+        </div>
 
-        <select
-          aria-label="Tipo"
-          className={controlClass}
-          value={filters.transferTypeId ?? ''}
-          onChange={(event) =>
-            updateFilter({
-              transferTypeId: event.target.value ? Number(event.target.value) : undefined,
-            })
-          }
-        >
-          <option value="">Todos os tipos</option>
-          {TRANSFER_TYPES.map((type) => (
-            <option key={type.id} value={type.id}>
-              {type.name}
-            </option>
-          ))}
-        </select>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-slate-500">Status</span>
+            <select
+              className={`${controlClass} w-full`}
+              value={filters.status ?? ''}
+              onChange={(event) =>
+                updateFilter({ status: (event.target.value || undefined) as TransactionStatus })
+              }
+            >
+              <option value="">Todos os status</option>
+              {STATUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <input
-          type="date"
-          aria-label="De"
-          className={controlClass}
-          value={filters.from?.slice(0, 10) ?? ''}
-          onChange={(event) =>
-            updateFilter({
-              from: event.target.value ? `${event.target.value}T00:00:00.000Z` : undefined,
-            })
-          }
-        />
-        <input
-          type="date"
-          aria-label="Até"
-          className={controlClass}
-          value={filters.to?.slice(0, 10) ?? ''}
-          onChange={(event) =>
-            updateFilter({
-              to: event.target.value ? `${event.target.value}T23:59:59.999Z` : undefined,
-            })
-          }
-        />
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-slate-500">Tipo</span>
+            <select
+              className={`${controlClass} w-full`}
+              value={filters.transferTypeId ?? ''}
+              onChange={(event) =>
+                updateFilter({
+                  transferTypeId: event.target.value ? Number(event.target.value) : undefined,
+                })
+              }
+            >
+              <option value="">Todos os tipos</option>
+              {TRANSFER_TYPES.map((type) => (
+                <option key={type.id} value={type.id}>
+                  {type.name}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        {hasFilters && (
-          <button
-            type="button"
-            className={secondaryButtonClass}
-            onClick={() => setFilters({ page: 1, limit: filters.limit })}
-          >
-            Limpar
-          </button>
-        )}
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-slate-500">De</span>
+            <input
+              type="date"
+              className={`${controlClass} w-full`}
+              value={filters.from?.slice(0, 10) ?? ''}
+              onChange={(event) =>
+                updateFilter({
+                  from: event.target.value ? `${event.target.value}T00:00:00.000Z` : undefined,
+                })
+              }
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-slate-500">Até</span>
+            <input
+              type="date"
+              className={`${controlClass} w-full`}
+              value={filters.to?.slice(0, 10) ?? ''}
+              onChange={(event) =>
+                updateFilter({
+                  to: event.target.value ? `${event.target.value}T23:59:59.999Z` : undefined,
+                })
+              }
+            />
+          </label>
+        </div>
       </section>
 
       <section className={`${cardClass} overflow-hidden`}>
@@ -218,6 +235,7 @@ export default function HomePage() {
                   <th className="px-4 py-3 font-medium">Status</th>
                   <th className="px-4 py-3 text-right font-medium">Valor</th>
                   <th className="px-4 py-3 font-medium">Criada em</th>
+                  <th className="px-4 py-3 text-right font-medium">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -240,17 +258,9 @@ export default function HomePage() {
                         }`}
                       >
                         <td className="px-4 py-3">
-                          <Link
-                            href={`/transactions/${id}`}
-                            onClick={(event) => {
-                              if (isModifiedClick(event)) return;
-                              event.preventDefault();
-                              setDetailId(id);
-                            }}
-                            className="rounded bg-slate-100 px-2 py-1 font-mono text-xs text-slate-600 transition hover:bg-slate-200 hover:text-indigo-700"
-                          >
+                          <span className="rounded bg-slate-100 px-2 py-1 font-mono text-xs text-slate-600">
                             {id.slice(0, 8)}…
-                          </Link>
+                          </span>
                         </td>
                         <td className="px-4 py-3 text-slate-700">
                           {transaction.transactionType.name}
@@ -264,6 +274,17 @@ export default function HomePage() {
                         <td className="px-4 py-3 text-slate-500">
                           {formatDateTime(transaction.createdAt)}
                         </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => setDetailId(id)}
+                            aria-label="Visualizar transação"
+                            title="Visualizar"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-indigo-700"
+                          >
+                            <EyeIcon className="h-4 w-4" />
+                          </button>
+                        </td>
                       </tr>
                     );
                   })
@@ -274,32 +295,14 @@ export default function HomePage() {
         )}
 
         {meta && items.length > 0 && (
-          <nav
-            aria-label="Paginação"
-            className="flex items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 text-sm"
-          >
-            <span className="text-slate-500">
-              Página {meta.page} de {Math.max(meta.totalPages, 1)} · {meta.total} no total
-            </span>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className={secondaryButtonClass}
-                disabled={meta.page <= 1}
-                onClick={() => updateFilter({ page: meta.page - 1 })}
-              >
-                Anterior
-              </button>
-              <button
-                type="button"
-                className={secondaryButtonClass}
-                disabled={meta.page >= meta.totalPages}
-                onClick={() => updateFilter({ page: meta.page + 1 })}
-              >
-                Próxima
-              </button>
-            </div>
-          </nav>
+          <Pagination
+            page={meta.page}
+            totalPages={meta.totalPages}
+            total={meta.total}
+            limit={filters.limit ?? 10}
+            onPageChange={(page) => updateFilter({ page })}
+            onLimitChange={(limit) => updateFilter({ limit })}
+          />
         )}
       </section>
 
@@ -345,6 +348,9 @@ function SkeletonRows() {
           </td>
           <td className="px-4 py-3">
             <Skeleton className="h-4 w-28" />
+          </td>
+          <td className="px-4 py-3">
+            <Skeleton className="ml-auto h-8 w-8 rounded-md" />
           </td>
         </tr>
       ))}
