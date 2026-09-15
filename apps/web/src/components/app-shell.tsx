@@ -25,7 +25,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <footer className="border-t border-slate-200 py-6">
         <p className="mx-auto max-w-5xl px-6 text-xs text-slate-400">
-          Arquitetura orientada a eventos · transactions ↔ anti-fraud via Kafka
+          Desenvolvido por Pedro Lima para o Tech Challenge BIUD
         </p>
       </footer>
     </div>
