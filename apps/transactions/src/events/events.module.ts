@@ -20,6 +20,11 @@ import { KafkaEventPublisher } from './kafka-event-publisher';
               clientId: config.get<string>('KAFKA_CLIENT_ID', 'transactions'),
               brokers: (config.get<string>('KAFKA_BROKERS') ?? 'localhost:9092').split(','),
             },
+            // groupId próprio do produtor: evita colidir com o ClientKafka do outro serviço no
+            // grupo padrão do Nest (nestjs-group-client), que causa rebalance ruidoso no startup.
+            consumer: {
+              groupId: config.get<string>('KAFKA_GROUP_ID_TRANSACTIONS', 'transactions-consumer'),
+            },
           },
         }),
       },
