@@ -206,6 +206,23 @@ enquanto manter as rotas preserva link direto e refresh — sem duplicar UI, já
 os mesmos componentes. Intercepting routes dariam URL sincronizada com o modal, mas com bem mais
 complexidade do que o ganho justifica aqui.
 
+## Estratégia de testes
+
+**Decisão:** Testar comportamento, não implementação. Backend (Jest): a regra do antifraude no
+limite exato (1000 aprovada, 1000.01 rejeitada) + acima/abaixo, a criação (grava pendente + emite o
+evento, com o producer mockado) e o consumo de status (transição correta + idempotência). Frontend
+(Vitest + Testing Library): as telas principais e seus estados (carregando/erro/vazio/dados), a
+validação do formulário e a reconciliação do cache no realtime, consultando por papel acessível
+(`getByRole`) antes de `data-testid`. Sem meta de cobertura.
+
+**Alternativas consideradas:** perseguir uma porcentagem de cobertura; testes e2e ponta a ponta
+subindo Kafka/Postgres no CI; consultar a UI por `data-testid`.
+
+**Por quê:** teste que quebra quando o comportamento quebra dá sinal útil — perseguir cobertura
+premia teste de implementação. e2e com broker/banco reais no CI é caro e frágil para o prazo;
+mockar o producer/consumidor cobre o contrato de eventos sem depender do Kafka. `getByRole` ainda
+valida a acessibilidade da marcação de brinde.
+
 ## Escala (alto volume de leituras e escritas)
 
 Não é uma decisão tomada no código, e sim como o desenho evolui sob carga — os ganchos já foram
