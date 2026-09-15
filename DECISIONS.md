@@ -205,3 +205,27 @@ routes do Next; modal puro sem rota.
 enquanto manter as rotas preserva link direto e refresh — sem duplicar UI, já que ambos consomem
 os mesmos componentes. Intercepting routes dariam URL sincronizada com o modal, mas com bem mais
 complexidade do que o ganho justifica aqui.
+
+## Escala (alto volume de leituras e escritas)
+
+Não é uma decisão tomada no código, e sim como o desenho evolui sob carga — os ganchos já foram
+deixados prontos nas decisões acima.
+
+**Escrita:** o caminho de criação é enxuto (`INSERT` + publicação do evento); a avaliação de fraude
+é assíncrona, fora do request. O Kafka desacopla `transactions` de `anti-fraud`, então picos de
+criação viram lag no consumidor, não erro no request. Sob volume: particionar `transaction.created`
+por `transactionExternalId` (paralelismo entre partições preservando a ordem por transação) e
+escalar o consumer group pelo número de partições; producer idempotente/em batch conforme a taxa.
+
+**Leitura (o dashboard é read-heavy):** índices nos campos de filtro (`status`, `transferTypeId`,
+`createdAt`) já estão no schema. Migrar a listagem de offset para cursor (keyset) em páginas
+profundas (ver [Paginação da listagem]); réplicas de leitura e cache das queries quentes (ex.: os
+contadores do resumo); se necessário, CQRS com um read model denormalizado.
+
+**Tempo real e horizontal:** serviços stateless atrás de load balancer. O SSE em múltiplas
+instâncias exige um barramento compartilhado — Redis pub/sub — fechando a limitação do fan-out em
+memória (ver [Atualização de status na interface (SSE)]); somar backpressure e limite de conexões.
+
+**Resiliência:** at-least-once + idempotência (já implementados) sustentam o reprocessamento;
+DLQ para mensagens venenosas quando surgirem falhas determinísticas (ver [Tratamento de falha na
+mensageria]).

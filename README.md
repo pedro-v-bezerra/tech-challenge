@@ -1,220 +1,97 @@
-# Desafio Técnico BIUD — Fullstack
+# BIUD Tech Challenge — Transações
 
-Bem-vindo. Este desafio existe para que você mostre como pensa, decide e organiza código em
-um cenário próximo do que fazemos aqui: uma API orientada a eventos e uma interface que
-precisa lidar com dados que mudam depois que a tela já foi renderizada.
+Solução para o desafio fullstack da BIUD: uma arquitetura **orientada a eventos** com dois
+microserviços conversando por **Kafka** e um **dashboard** que reflete a mudança de status em
+tempo real.
 
-O repositório vem praticamente vazio de propósito. Montar o projeto — workspace, tooling,
-padrões, integração contínua — faz parte do desafio, porque faz parte do trabalho.
-
-Leia o [PRACTICES.md](./PRACTICES.md) antes de começar: o que está lá são requisitos, não
-sugestões.
-
-- [O problema](#o-problema)
-- [Contratos](#contratos)
-- [O que você precisa entregar](#o-que-você-precisa-entregar)
-- [O que já vem no repositório](#o-que-já-vem-no-repositório)
-- [Stack](#stack)
-- [Subindo a infraestrutura](#subindo-a-infraestrutura)
-- [Defesa do código](#defesa-do-código)
-- [Como entregar](#como-entregar)
-
----
-
-## O problema
-
-Toda transação financeira criada precisa ser validada por um microserviço antifraude. Esse
-serviço avalia a transação e devolve o resultado, que atualiza o status do registro
-original.
-
-Uma transação tem três status possíveis: **pendente**, **aprovada** e **rejeitada**. Toda
-transação com valor **acima de 1000** deve ser rejeitada; as demais são aprovadas.
+Toda transação nasce **pendente**, é avaliada de forma assíncrona pelo antifraude e passa a
+**aprovada** ou **rejeitada** — a regra é: valor **acima de 1000 é rejeitado**, o resto é aprovado.
 
 ```mermaid
 flowchart LR
-  Transaction -- Salva com status pendente --> DB[(Database)]
-  Transaction -- Evento transaction.created --> AntiFraud[Anti-Fraud]
-  AntiFraud -- Evento transaction.status.updated --> Transaction
-  Transaction -- Atualiza o status --> DB
+  Web[Dashboard Next.js] -- POST /transactions --> TX[transactions]
+  TX -- salva PENDING --> DB[(PostgreSQL)]
+  TX -- transaction.created --> K((Kafka))
+  K --> AF[anti-fraud]
+  AF -- transaction.status.updated --> K
+  K --> TX
+  TX -- atualiza status --> DB
+  TX -- SSE /transactions/stream --> Web
 ```
-
-A comunicação entre os dois serviços é feita por **Kafka**. A chamada de criação não pode
-esperar o resultado da validação: a transação nasce `pendente` e muda de status depois, de
-forma assíncrona.
-
-## Contratos
-
-### Criar uma transação
-
-```json
-{
-  "accountExternalIdDebit": "Guid",
-  "accountExternalIdCredit": "Guid",
-  "transferTypeId": 1,
-  "value": 120
-}
-```
-
-### Recuperar uma transação
-
-```json
-{
-  "transactionExternalId": "Guid",
-  "transactionType": { "name": "" },
-  "transactionStatus": { "name": "" },
-  "value": 120,
-  "createdAt": "Date"
-}
-```
-
-### Eventos
-
-Estes são os dois eventos do fluxo. O formato do payload é decisão sua — só precisa ser
-consistente entre quem publica e quem consome.
-
-| Evento | Publicado por | Consumido por |
-| --- | --- | --- |
-| `transaction.created` | `transactions` | `anti-fraud` |
-| `transaction.status.updated` | `anti-fraud` | `transactions` |
-
-## O que você precisa entregar
-
-### Fundação do projeto
-
-Você começa do zero. Espera-se que monte:
-
-- A estrutura do projeto — monorepo ou repositórios separados por serviço, a escolha é sua
-- TypeScript configurado
-- Lint e formatação, rodando também como hook de pre-commit
-- Validação de mensagem de commit (Conventional Commits)
-- Um comando único que roda todo o quality gate
-- Integração contínua no GitHub Actions, executando esse mesmo quality gate e **verde ao final**
-
-O [PRACTICES.md](./PRACTICES.md) detalha o que cada um desses itens precisa cobrir.
-
-### Backend
-
-- Endpoint de criação de transação, gravando com status `pendente` e publicando o evento de criação
-- Endpoint de consulta de uma transação pelo identificador externo
-- Endpoint de listagem paginada, com filtros por status, tipo e período — é o que alimenta o dashboard
-- Serviço antifraude consumindo o evento de criação, aplicando a regra e publicando o resultado
-- Consumo do evento de retorno no serviço de transações, atualizando o status
-- Modelagem de dados e migrations versionadas
-
-### Frontend
-
-Um dashboard sobre essa API, com:
-
-- **Listagem** paginada, com filtros por status, tipo e período
-- **Detalhe** de uma transação
-- **Criação** de transação por formulário, com validação
-- **Estados de tela** tratados explicitamente: carregando, erro e lista vazia
-
-Repare que a transação aparece como `pendente` e muda de status fora do ciclo de request do
-usuário. Como a interface reflete essa mudança é decisão sua — e queremos ler o porquê dela.
-
-### Testes
-
-Testes automatizados cobrindo as regras de negócio no backend e as telas principais no
-frontend.
-
-### DECISIONS.md
-
-Crie um `DECISIONS.md` na raiz. Para **cada decisão estruturante** — organização do projeto,
-modelagem de dados, formato dos eventos, tratamento de falha na mensageria, atualização do
-status na interface, estratégia de testes — registre:
-
-1. Qual foi a decisão
-2. Que alternativas você considerou
-3. Por que escolheu essa
-
-Inclua também sua resposta para esta pergunta:
-
-> A aplicação pode precisar lidar com um volume alto de escritas e leituras concorrentes.
-> Como você abordaria esse requisito?
-
-Não precisa implementar a resposta — precisa defendê-la.
-
-Uma decisão sem alternativa considerada não é uma decisão, é um acidente. É o **porquê** que
-nos interessa.
-
-### README do seu projeto
-
-Substitua este README pelo seu: o que você construiu, como rodar, como testar e o que ficou
-de fora. Quem clona o seu repositório precisa conseguir subir tudo sem perguntar nada.
-
-## O que já vem no repositório
-
-Só a infraestrutura local, para que todo mundo desenvolva contra os mesmos serviços:
-
-| Arquivo | Para quê |
-| --- | --- |
-| `docker-compose.yml` | Postgres, Kafka e Kafka UI |
-| `.env.example` | Variáveis de ambiente do ambiente local |
-| `.editorconfig`, `.gitignore`, `.nvmrc` | Convenções básicas de editor e versão do Node |
-| `.github/pull_request_template.md` | Template de PR |
-
-Todo o resto é seu. Nada aqui é intocável: se sua arquitetura pedir outra coisa, mude — e
-registre o porquê no `DECISIONS.md`.
 
 ## Stack
 
-O uso desta stack é obrigatório, porque é a que usamos aqui:
+- **Monorepo**: pnpm workspaces + Turborepo
+- **Backend**: NestJS + Prisma + PostgreSQL; Kafka via `@nestjs/microservices` (kafkajs)
+- **Frontend**: Next.js (App Router) + Tailwind + TanStack Query; tempo real por SSE (`EventSource`)
+- **Contratos**: pacote `@biud/contracts` com tipos de eventos, tópicos e status compartilhados
+- **Testes**: Jest (backend) e Vitest + Testing Library (frontend)
+- **Qualidade**: ESLint, Prettier, Husky + lint-staged, commitlint (Conventional Commits), CI no GitHub Actions
 
-| Camada | Tecnologia |
-| --- | --- |
-| Runtime | Node.js 22+ |
-| Gerenciador de pacotes | pnpm |
-| Backend | NestJS + TypeScript |
-| ORM | Prisma |
-| Banco | PostgreSQL |
-| Mensageria | Kafka |
-| Frontend | Next.js + React + Tailwind |
-| Testes | À sua escolha, desde que rodem no quality gate |
+## Estrutura
 
-Dentro dessa stack, a organização do código é sua: paradigma, camadas, modularização e
-estilo ficam a seu critério.
-
-## Subindo a infraestrutura
-
-```bash
-cp .env.example .env
-docker compose up -d
+```
+apps/
+  transactions/   API HTTP + Prisma + produtor/consumidor Kafka + stream SSE
+  anti-fraud/     microserviço Kafka: aplica a regra e publica o resultado
+  web/            dashboard Next.js (listagem, criação e detalhe)
+packages/
+  contracts/      tipos compartilhados (eventos, tópicos, status)
 ```
 
-Serviços disponíveis depois disso:
+## Pré-requisitos
 
-| Serviço | Endereço |
-| --- | --- |
-| Postgres | `localhost:5432` |
-| Kafka | `localhost:9092` |
-| Kafka UI | http://localhost:8080 |
+- **Node 22+** e **pnpm** (`corepack enable pnpm`)
+- **Docker** (Postgres + Kafka + Kafka UI via `docker-compose.yml`)
 
-As portas das suas aplicações ficam a seu critério; o `.env.example` sugere 3001 para a API
-de transações, 3002 para o antifraude e 3000 para o dashboard.
+## Como rodar
 
-## Defesa do código
+```bash
+pnpm install
+cp .env.example .env
+pnpm stack
+```
 
-Depois da entrega, conversamos sobre o código. Você vai percorrer as escolhas do
-`DECISIONS.md`, explicar por que cada uma foi feita e o que mudaria com outros requisitos.
+`pnpm stack` sobe a infraestrutura (aguardando ficar saudável), prepara o banco
+(`prisma generate` + `migrate deploy` + `seed`) e liga os três serviços juntos. `Ctrl+C` derruba
+todos. Em partes: `pnpm services:up`, `pnpm db:setup`, `pnpm dev` (e `pnpm services:down`).
 
-Usar IA no dia a dia é normal e aqui também é — não é isso que estamos medindo. O que
-avaliamos é se você entende, sustenta e consegue mudar aquilo que entregou. Código que você
-não sabe explicar não conta a seu favor, tenha vindo de onde tiver vindo.
+| Serviço      | URL                     |
+| ------------ | ----------------------- |
+| Dashboard    | http://localhost:3000   |
+| API (Swagger)| http://localhost:3001/docs |
+| Kafka UI     | http://localhost:8080   |
 
-## Como entregar
+## Como testar
 
-1. Faça um **fork** deste repositório
-2. Desenvolva no seu fork, com commits incrementais, seguindo o [PRACTICES.md](./PRACTICES.md)
-3. Compartilhe o fork com os avaliadores, em **Settings → Collaborators**:
+```bash
+pnpm quality
+```
 
-   - alex.silveira@biud.com.br
-   - marcelo.oliveira@biud.com.br
-   - gustavofarias@biud.com.br
+Roda o gate completo: `lint`, `typecheck`, `test`, `build` e checagem de formatação, orquestrados
+pelo Turborepo. Passos isolados: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`,
+`pnpm format:check`.
 
-4. Avise a conclusão por e-mail dentro do prazo de **5 dias corridos**
+**Fluxo ponta a ponta:** crie uma transação com `value: 120` → nasce **Pendente** e vira
+**Aprovada** em segundos, sem recarregar; com `value: 2000` → **Rejeitada**. Dá para acompanhar os
+eventos pelo Kafka UI.
 
-Ficou alguma dúvida sobre o enunciado? Pergunte — tirar dúvida faz parte do processo e não
-conta contra você.
+## Endpoints (transactions)
 
-Boa sorte.
+- `POST /transactions` — cria a transação (nasce pendente) e publica `transaction.created`
+- `GET /transactions` — listagem paginada com filtros (status, tipo, período)
+- `GET /transactions/:transactionExternalId` — detalhe (ou 404)
+- `GET /transactions/stream` — SSE com as mudanças de status
+
+## Decisões e escopo
+
+As decisões de arquitetura — com alternativas consideradas e o porquê — estão em
+[DECISIONS.md](./DECISIONS.md), incluindo a **resposta de escala** para alto volume. Os requisitos
+do desafio estão em [PRACTICES.md](./PRACTICES.md).
+
+**Fora de escopo (documentado como evolução):** DLQ para mensagens venenosas, paginação por cursor,
+e fan-out do SSE via Redis para múltiplas instâncias — todos com o gancho já deixado no código.
+
+---
+
+Desenvolvido por **Pedro Lima** para o Tech Challenge BIUD.
